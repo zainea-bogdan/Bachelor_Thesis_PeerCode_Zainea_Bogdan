@@ -2,6 +2,15 @@ from fastapi import APIRouter,HTTPException
 import urllib.request
 import requests
 
+#importing env variables
+from dotenv import load_dotenv
+import os
+load_dotenv()
+GITHUB_API_PAT = os.getenv("GITHUB_API_PAT")
+headers = {
+        "Authorization": f"token {GITHUB_API_PAT}"
+}
+
 router = APIRouter()
 
 @router.get("/user/{github_username}")
@@ -11,7 +20,8 @@ def get_user_info(github_username: str):
         test_username = urllib.request.urlopen(f"https://github.com/{github_username}").getcode()
         if(test_username==200):
             try:
-                response = requests.get(f"https://api.github.com/users/{github_username}")
+                response = requests.get(f"https://api.github.com/users/{github_username}",
+                                        headers=headers)
                 data= response.json();
                 gh_username=data["login"]
                 gh_profile_image=data["avatar_url"]
@@ -57,7 +67,8 @@ def get_all_repos_info(github_username: str):
         while True:
             response = requests.get(
                 f"https://api.github.com/users/{github_username}/repos",
-                params={"per_page": 100, "page": page})
+                params={"per_page": 100, "page": page},
+                headers=headers)
             if response.status_code != 200:
                 raise HTTPException(
                     status_code=response.status_code,
@@ -140,7 +151,7 @@ def get_all_repos_info(github_username: str):
 def get_one_repo_info(github_username:str,
                       github_repo: str):
     try:
-        response = requests.get(f"https://api.github.com/repos/{github_username}/{github_repo}")
+        response = requests.get(f"https://api.github.com/repos/{github_username}/{github_repo}",headers=headers)
 
         if response.status_code == 404:
             raise HTTPException(status_code=404, detail="User or Repo not found")

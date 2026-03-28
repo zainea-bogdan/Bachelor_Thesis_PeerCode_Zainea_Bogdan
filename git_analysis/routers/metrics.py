@@ -6,7 +6,7 @@ from routers.repoInfo import get_repo_commits_until_deadline
 router = APIRouter()
 
 # Commits analysis metrics.
-@router.get("/user/{github_username}/repo/{github_repo}/metrics/commits/{deadline_data}")
+@router.get("/user/{github_username}/repos/{github_repo}/metrics/commits/{deadline_data}")
 def get_commits_metrics(github_username:str,
                       github_repo: str,
                       deadline_data:str ):

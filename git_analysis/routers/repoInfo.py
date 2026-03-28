@@ -2,9 +2,19 @@ from fastapi import APIRouter,HTTPException
 from datetime import datetime
 import requests
 
+#importing env variables
+from dotenv import load_dotenv
+import os
+load_dotenv()
+GITHUB_API_PAT = os.getenv("GITHUB_API_PAT")
+headers = {
+        "Authorization": f"token {GITHUB_API_PAT}"
+}
+
+
 router = APIRouter()
 
-@router.get("/user/{github_username}/repo/{github_repo}/commits")
+@router.get("/user/{github_username}/repos/{github_repo}/commits")
 def get_repo_commits(github_username:str,
                       github_repo: str):
     try:
@@ -14,7 +24,8 @@ def get_repo_commits(github_username:str,
         while True:
             response = requests.get(
                 f"https://api.github.com/repos/{github_username}/{github_repo}/commits",
-                params={"per_page": 100, "page": page})
+                params={"per_page": 100, "page": page},
+                headers=headers)
             if response.status_code != 200:
                 raise HTTPException(
                     status_code=response.status_code,
@@ -93,7 +104,7 @@ def get_repo_commits(github_username:str,
             "error": str(e)
         }
     
-@router.get("/user/{github_username}/repo/{github_repo}/commits/{deadline_date}")
+@router.get("/user/{github_username}/repos/{github_repo}/commits/deadline/{deadline_date}")
 def get_repo_commits_until_deadline(github_username:str,
                       github_repo: str,
                       deadline_date: str):
@@ -116,7 +127,8 @@ def get_repo_commits_until_deadline(github_username:str,
                 f"https://api.github.com/repos/{github_username}/{github_repo}/commits",
                 params={"per_page": 100, 
                         "page": page,
-                        "until": deadline_iso})
+                        "until": deadline_iso},
+                headers=headers)
             if response.status_code != 200:
                 raise HTTPException(
                     status_code=response.status_code,
@@ -203,7 +215,7 @@ def get_one_commit_info(github_username:str,
                       github_repo: str,
                       commit_sha: str):
     try:
-        response = requests.get(f"https://api.github.com/repos/{github_username}/{github_repo}/commits/{commit_sha}")
+        response = requests.get(f"https://api.github.com/repos/{github_username}/{github_repo}/commits/{commit_sha}",headers=headers)
         if response.status_code != 200:
                 raise HTTPException(
                     status_code=response.status_code,
@@ -271,7 +283,7 @@ def get_one_commit_info(github_username:str,
 def get_repo_main_branch_sha(github_username:str,
                       github_repo: str,):
     try:
-        response = requests.get(f"https://api.github.com/repos/{github_username}/{github_repo}/branches")
+        response = requests.get(f"https://api.github.com/repos/{github_username}/{github_repo}/branches",headers=headers)
         if response.status_code != 200:
                 raise HTTPException(
                     status_code=response.status_code,
@@ -295,11 +307,11 @@ def get_repo_main_branch_sha(github_username:str,
         }
 
 # tree structure all in 2 calls :)
-@router.get("/user/{github_username}/repo/{github_repo}/tree")
+@router.get("/user/{github_username}/repos/{github_repo}/tree")
 def get_all_repo_tree(github_username: str, github_repo: str):
     try:
         branch_sha  = get_repo_main_branch_sha(github_username,github_repo).get("main_branch_sha")
-        response = requests.get(f"https://api.github.com/repos/{github_username}/{github_repo}/git/trees/{branch_sha}?recursive=1")
+        response = requests.get(f"https://api.github.com/repos/{github_username}/{github_repo}/git/trees/{branch_sha}?recursive=1",headers=headers)
         if response.status_code != 200:
                 raise HTTPException(
                     status_code=response.status_code,
@@ -320,7 +332,7 @@ def get_all_repo_tree(github_username: str, github_repo: str):
 @router.get("/user/{github_username}/repos/{github_repo}/contributors")
 def get_repo_contributors(github_username: str, github_repo: str):
     try:
-        response = requests.get(f"https://api.github.com/repos/{github_username}/{github_repo}/contributors")
+        response = requests.get(f"https://api.github.com/repos/{github_username}/{github_repo}/contributors",headers=headers)
         if response.status_code != 200:
                 raise HTTPException(
                     status_code=response.status_code,
