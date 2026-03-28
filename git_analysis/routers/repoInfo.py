@@ -84,7 +84,7 @@ def get_repo_commits(github_username:str,
         return {
             "status": "success",
             "count":len(curated_commits),
-            "commits": curated_commits
+            "commits_data": curated_commits
             }
     except:
         return {"status":"failed",
@@ -150,12 +150,92 @@ def get_one_commit_info(github_username:str,
 
         return{
             "status":"success",
-            "data":curated_data
+            "commit_data":curated_data
         } 
     except:
         return {"status":"failed",
                 "error": "something went wrong fetching user data...Check terminal"}
 
+
+# finding the main branch sha in order to get the repo structure
+def get_repo_main_branch_sha(github_username:str,
+                      github_repo: str,):
+    try:
+        response = requests.get(f"https://api.github.com/repos/{github_username}/{github_repo}/branches")
+        if response.status_code != 200:
+                raise HTTPException(
+                    status_code=response.status_code,
+                    detail="Error fetching repo's commits from GitHub"
+                )
+        
+        list_of_branches= response.json()
+        for branch in list_of_branches:
+            if ((branch.get("name") == "main") or (branch.get("name")=="master")):
+                 return{
+                    "status":"success",
+                    "main_branch_sha": branch.get("commit").get("sha") 
+                }  
+
+        return {"status":"failed",
+                "error": "main or master branch not found"}
+    except:
+        return {"status":"failed",
+                "error": "something went wrong fetching user data...Check terminal"}
+
+# tree structure all in 2 calls :)
+@router.get("/user/{github_username}/repos/{github_repo}/tree")
+def get_all_repo_tree(github_username: str, github_repo: str):
+    try:
+        branch_sha  = get_repo_main_branch_sha(github_username,github_repo).get("main_branch_sha")
+        response = requests.get(f"https://api.github.com/repos/{github_username}/{github_repo}/git/trees/{branch_sha}?recursive=1")
+        if response.status_code != 200:
+                raise HTTPException(
+                    status_code=response.status_code,
+                    detail="Error fetching repo's commits from GitHub"
+                )
+        
+        data= response.json()
+        return{
+            "status":"success",
+            "tree_data":data
+        } 
+    except:
+        return {"status":"failed",
+                "error": "something went wrong fetching user data...Check terminal"}
+
+@router.get("/user/{github_username}/repos/{github_repo}/contributors")
+def get_repo_contributors(github_username: str, github_repo: str):
+    try:
+        response = requests.get(f"https://api.github.com/repos/{github_username}/{github_repo}/contributors")
+        if response.status_code != 200:
+                raise HTTPException(
+                    status_code=response.status_code,
+                    detail="Error fetching repo's commits from GitHub"
+                )
+        
+        contributors_list= response.json()
+        contr_filtered = []
+        for contributor in contributors_list:
+            contr_name = contributor.get("login")
+            contr_account_url = contributor.get("html_url")
+            contr_type = contributor.get("type")
+            contr_repo_contributions =contributor.get("contributions")
+            contr_filtered.append(
+                {
+                    "contributor_username": contr_name,
+                    "contributor_gh_account_url": contr_account_url,
+                    "contributor_account_type": contr_type,
+                    "repo_contributions_count": contr_repo_contributions
+                }
+            )
+
+        return {
+            "status":"success",
+            "contributors_data":contr_filtered
+        } 
+    except:
+        return {"status":"failed",
+                "error": "something went wrong fetching user data...Check terminal"}
 
 
 #health check
