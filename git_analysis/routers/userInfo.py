@@ -39,10 +39,11 @@ def get_user_info(github_username: str):
             except:
                 return {"status": "failed",
                     "error": "something went wrong while fetching user data... Check terminal"}
-    except:
+    except Exception as e:
         return {
             "status": "failed",
-            "error": "Invalid link"}
+            "error": str(e)
+        }
 
 
 
@@ -129,11 +130,11 @@ def get_all_repos_info(github_username: str):
         "count": len(curated_repos),
         "repos": curated_repos
         }
-    except:
-        return {"status":"failed",
-                "error": "something went wrong fetching user data...Check terminal"}
-
-
+    except Exception as e:
+        return {
+            "status": "failed",
+            "error": str(e)
+        }
 
 @router.get("/user/{github_username}/repos/{github_repo}")
 def get_one_repo_info(github_username:str,
@@ -208,9 +209,11 @@ def get_one_repo_info(github_username:str,
             "status": "success",
             "repo_data": repo_data
             }
-    except:
-        return {"status":"failed",
-                "error": "something went wrong fetching user data...Check terminal"}
+    except Exception as e:
+        return {
+            "status": "failed",
+            "error": str(e)
+        }
 
 #health check
 @router.get("/test1")

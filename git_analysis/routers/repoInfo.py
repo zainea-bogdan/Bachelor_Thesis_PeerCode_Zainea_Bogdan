@@ -1,9 +1,10 @@
 from fastapi import APIRouter,HTTPException
+from datetime import datetime
 import requests
 
 router = APIRouter()
 
-@router.get("/user/{github_username}/repos/{github_repo}/commits")
+@router.get("/user/{github_username}/repo/{github_repo}/commits")
 def get_repo_commits(github_username:str,
                       github_repo: str):
     try:
@@ -86,9 +87,116 @@ def get_repo_commits(github_username:str,
             "count":len(curated_commits),
             "commits_data": curated_commits
             }
-    except:
-        return {"status":"failed",
-                "error": "something went wrong fetching user data...Check terminal"}
+    except Exception as e:
+        return {
+            "status": "failed",
+            "error": str(e)
+        }
+    
+@router.get("/user/{github_username}/repo/{github_repo}/commits/{deadline_date}")
+def get_repo_commits_until_deadline(github_username:str,
+                      github_repo: str,
+                      deadline_date: str):
+    try:
+        #validate the dealdine date:
+        try:
+            parsed_deadline = datetime.strptime(deadline_date, "%Y-%m-%d")
+            deadline_iso = parsed_deadline.strftime("%Y-%m-%dT23:59:59Z")
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail="deadline_date must be in format YYYY-MM-DD"
+            )
+
+        page=1
+        all_commits=[]
+        curated_commits=[]
+        while True:
+            response = requests.get(
+                f"https://api.github.com/repos/{github_username}/{github_repo}/commits",
+                params={"per_page": 100, 
+                        "page": page,
+                        "until": deadline_iso})
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=response.status_code,
+                    detail="Error fetching repo's commits from GitHub"
+                )
+            else:
+                commits = response.json()
+                if not commits:
+                    break
+                else:
+                    all_commits.extend(commits)
+                    page += 1
+
+
+        for data in all_commits:
+            commit_sha = data.get("sha")
+            commit_api_url = data.get("url")
+            commit_html_url = data.get("html_url")
+            
+            commit_author_login = data.get("author").get("login")
+            commit_author_id = data.get("author").get("id")
+
+            raw_author_name = data.get("commit").get("author", {}).get("name")
+            raw_author_email = data.get("commit").get("author", {}).get("email")
+
+            commit_committer_login = data.get("committer", {}).get("login")
+            raw_committer_name = data.get("commit").get("committer", {}).get("name")
+            raw_committer_email = data.get("commit").get("committer", {}).get("email")
+            
+            commit_author_date = data.get("commit").get("author", {}).get("date")
+            commit_committer_date = data.get("commit").get("committer", {}).get("date")
+            
+            commit_message = data.get("commit").get("message")
+            commit_comment_count = data.get("commit").get("comment_count")
+            parent_count = len(data.get("parents"))
+            is_merge_commit = len(data.get("parents")) > 1
+            is_verified = data.get("commit").get("verification").get("verified")
+            verification_reason = data.get("commit").get("verification").get("reason")
+
+            curated_commits.append({
+                "status":"success",
+                "commit_sha": commit_sha,
+                "commit_api_url": commit_api_url,
+                "commit_html_url": commit_html_url,
+
+                "commit_author_login": commit_author_login,
+                "commit_author_id": commit_author_id,
+                "commit_author_name": raw_author_name,
+                "commit_author_email": raw_author_email,
+
+                "commit_committer_login": commit_committer_login,
+                "commit_committer_name": raw_committer_name,
+                "commit_committer_email": raw_committer_email,
+
+                "commit_author_date": commit_author_date,
+                "commit_committer_date": commit_committer_date,
+
+                "commit_message": commit_message,
+                "commit_comment_count": commit_comment_count,
+
+                "parent_count": parent_count,
+                "is_merge_commit": is_merge_commit,
+
+                "is_verified": is_verified,
+                "verification_reason": verification_reason
+            })
+
+        return {
+            "status": "success",
+            "count":len(curated_commits),
+            "data": curated_commits
+            }
+    except Exception as e:
+        return {
+            "status": "failed",
+            "error": str(e)
+        }
+
+
+
 
 @router.get("/user/{github_username}/repos/{github_repo}/commits/{commit_sha}")
 def get_one_commit_info(github_username:str,
@@ -152,9 +260,11 @@ def get_one_commit_info(github_username:str,
             "status":"success",
             "commit_data":curated_data
         } 
-    except:
-        return {"status":"failed",
-                "error": "something went wrong fetching user data...Check terminal"}
+    except Exception as e:
+        return {
+            "status": "failed",
+            "error": str(e)
+        }
 
 
 # finding the main branch sha in order to get the repo structure
@@ -178,12 +288,14 @@ def get_repo_main_branch_sha(github_username:str,
 
         return {"status":"failed",
                 "error": "main or master branch not found"}
-    except:
-        return {"status":"failed",
-                "error": "something went wrong fetching user data...Check terminal"}
+    except Exception as e:
+        return {
+            "status": "failed",
+            "error": str(e)
+        }
 
 # tree structure all in 2 calls :)
-@router.get("/user/{github_username}/repos/{github_repo}/tree")
+@router.get("/user/{github_username}/repo/{github_repo}/tree")
 def get_all_repo_tree(github_username: str, github_repo: str):
     try:
         branch_sha  = get_repo_main_branch_sha(github_username,github_repo).get("main_branch_sha")
@@ -199,9 +311,11 @@ def get_all_repo_tree(github_username: str, github_repo: str):
             "status":"success",
             "tree_data":data
         } 
-    except:
-        return {"status":"failed",
-                "error": "something went wrong fetching user data...Check terminal"}
+    except Exception as e:
+        return {
+            "status": "failed",
+            "error": str(e)
+        }
 
 @router.get("/user/{github_username}/repos/{github_repo}/contributors")
 def get_repo_contributors(github_username: str, github_repo: str):
@@ -233,10 +347,11 @@ def get_repo_contributors(github_username: str, github_repo: str):
             "status":"success",
             "contributors_data":contr_filtered
         } 
-    except:
-        return {"status":"failed",
-                "error": "something went wrong fetching user data...Check terminal"}
-
+    except Exception as e:
+        return {
+            "status": "failed",
+            "error": str(e)
+        }
 
 #health check
 @router.get("/test2")
