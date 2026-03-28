@@ -53,15 +53,32 @@ def get_commits_metrics(github_username:str,
         metrics_data["active_days"]=len(unique_date_values)
 
         #activity span: extracting the last and first commit date and counting the number of days taken between.
-        # sorted_commits_dates = sorted(set(com.get("commit_committer_date") for com in non_merge_commits_list))
-        # metrics_data["activity_span_days"]=sorted_commits_dates[-1]
+        sorted_commits_dates = sorted(datetime.strptime((com.get("commit_committer_date")), "%Y-%m-%dT%H:%M:%SZ").date() for com in non_merge_commits_list)
+        first_commit_date = sorted_commits_dates[0]
+        last_commit_date=sorted_commits_dates[-1]
+        metrics_data["activity_span_days"]=(last_commit_date-first_commit_date).days
 
+        #avg commits per day:
+        metrics_data["avg_number_of_real_commits_per_day"]=metrics_data["total_number_of_real_commits"]/ metrics_data["active_days"]
+        
+        #ratio of commits in last days.
+        counter_last_day_commits=0
+        deadline_data_ajustata = datetime.strptime(deadline_data, "%Y-%m-%d").date()
+        for com in non_merge_commits_list:
+            if com.get("commit_committer_date"):
+                commit_date = datetime.strptime(
+                    com.get("commit_committer_date"),
+                    "%Y-%m-%dT%H:%M:%SZ"
+                ).date()
 
-        metrics_data["avg_number_of_commits_per_day"]=0
-        metrics_data["ratio_of_last_day_commit"]=0
+            if commit_date == deadline_data_ajustata:
+                    counter_last_day_commits += 1
+
+        metrics_data["last_day_commit_ratio"]=counter_last_day_commits/metrics_data["total_number_of_real_commits"]
+
+        
         metrics_data["same_day_concentration_ratio"]=0
         metrics_data["consistency_score"]=0
-        metrics_data["burstiness_flag"]=True
 
         metrics_resume={
             "repo": repo,
