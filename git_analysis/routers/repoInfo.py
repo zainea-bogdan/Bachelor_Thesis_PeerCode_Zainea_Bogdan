@@ -328,6 +328,8 @@ def get_all_repo_tree(github_username: str, github_repo: str):
             "status": "failed",
             "error": str(e)
         }
+    
+
 
 @router.get("/user/{github_username}/repos/{github_repo}/contributors")
 def get_repo_contributors(github_username: str, github_repo: str):
@@ -364,6 +366,10 @@ def get_repo_contributors(github_username: str, github_repo: str):
             "status": "failed",
             "error": str(e)
         }
+    
+
+
+
 
 #health check
 @router.get("/test2")

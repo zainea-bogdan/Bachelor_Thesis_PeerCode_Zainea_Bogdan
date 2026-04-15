@@ -171,7 +171,7 @@ def get_commits_metrics(github_username:str,
         if metadata_dates["number_of_days_started_before_deadline"] < 3:
             flag_late_start={
                 "name":"LATE_START_PATTERN",
-                "description":f"The student have started working on this project {metrics_data["largest_inactivity_gap_days"]} days before deadline"
+                "description":f"The student have started working on this project {   metadata_dates["number_of_days_started_before_deadline"]} days before deadline"
             }
             flags.append(flag_late_start)
 

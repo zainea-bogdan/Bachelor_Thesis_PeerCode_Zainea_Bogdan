@@ -229,5 +229,9 @@ def get_one_repo_info(github_username:str,
 #health check
 @router.get("/test1")
 def test():
-    return {"message": "user router works"}
+    return {"message":"useraloive"}
+
+
+
+
 
