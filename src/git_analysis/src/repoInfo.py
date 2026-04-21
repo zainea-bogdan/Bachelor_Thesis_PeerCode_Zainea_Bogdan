@@ -111,8 +111,7 @@ def get_repo_commits_until_deadline(github_username:str,
     try:
         #validate the dealdine date:
         try:
-            parsed_deadline = datetime.strptime(deadline_date, "%Y-%m-%d")
-            deadline_iso = parsed_deadline.strftime("%Y-%m-%dT23:59:59Z")
+            deadline_iso = datetime.strptime(deadline_date, "%Y-%m-%d").strftime("%Y-%m-%dT23:59:59Z")
         except ValueError:
             raise HTTPException(
                 status_code=400,

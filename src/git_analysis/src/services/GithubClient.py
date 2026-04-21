@@ -1,9 +1,7 @@
 import os
-from fastapi import HTTPException
 import requests
 from dotenv import load_dotenv
 
-#imi incarc prima data token ul din env
 load_dotenv()
 
 class GitHubClient:
@@ -15,7 +13,7 @@ class GitHubClient:
         }
 
     def get_simple_api_response(self, url: str, params: dict = None) -> dict:
-        response = requests.get(self.BASE_URL+url, headers=self.headers, params=params or {})
+        response = requests.get(url, headers=self.headers, params=params or {})
         if response.status_code != 200:
             raise Exception(f"GitHub API error {response.status_code}: {response.text}")
         return response.json()
@@ -24,8 +22,10 @@ class GitHubClient:
         page = 1
         all_data = []
         while True:
-            data = self.get_simple_api_response(self.BASE_URL+url, 
-                            params={"per_page": 100, "page": page})
+            page_params = {"per_page": 100, "page": page}
+            if params:
+                page_params.update(params)
+            data = self.get_simple_api_response(url, params=page_params)
             if not data:
                 break
             all_data.extend(data)

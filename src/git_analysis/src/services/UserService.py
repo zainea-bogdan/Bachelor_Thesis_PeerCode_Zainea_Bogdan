@@ -7,7 +7,7 @@ class UserService:
         self.base_url = GitHubClient.BASE_URL
 
     def get_user(self, username: str) -> dict:
-        data = self.client.get(f"{self.base_url}/users/{username}")
+        data = self.client.get_simple_api_response(f"{self.base_url}/users/{username}")
         return {
             "username": data.get("login"),
             "profile_image": data.get("avatar_url"),
@@ -20,6 +20,3 @@ class UserService:
             "github_user_since": data.get("created_at"),
             "public_repos": data.get("public_repos")
         }
-
-    def get_users(self, usernames: list[str]) -> list[dict]:
-        return [self.get_user(username) for username in usernames]
