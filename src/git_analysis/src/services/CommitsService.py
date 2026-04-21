@@ -35,7 +35,22 @@ class CommitsService:
                 "is_merge_commit": len(data.get("parents",[])) > 1,
 
                 "is_verified": data.get("commit", {}).get("verification", {}).get("verified"),
-                "verification_reason": data.get("commit", {}).get("verification", {}).get("reason")
+                "verification_reason": data.get("commit", {}).get("verification", {}).get("reason"),
+
+                "stats_additions": data.get("stats", {}).get("additions"),
+                "stats_deletions": data.get("stats", {}).get("deletions"),
+                "stats_total_changes": data.get("stats", {}).get("total"),
+                "files_changed": [
+                    {
+                        "filename": f.get("filename"),
+                        "status": f.get("status"),
+                        "additions": f.get("additions"),
+                        "deletions": f.get("deletions"),
+                        "changes": f.get("changes"),
+                        "patch": f.get("patch")
+                    }
+                    for f in data.get("files", [])
+                ]
             }
 
     def get_all_commits(self, username: str,repo_name: str,start_date: str,deadline: str) -> list[dict]:

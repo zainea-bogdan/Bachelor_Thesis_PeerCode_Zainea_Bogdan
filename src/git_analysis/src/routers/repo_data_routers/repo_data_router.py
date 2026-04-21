@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException
 from src.services.RepoService import RepoService
 from src.routers.repo_data_routers.commits_data_router import router as commits_router
 
