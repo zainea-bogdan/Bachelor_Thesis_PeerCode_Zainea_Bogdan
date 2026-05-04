@@ -1,0 +1,12 @@
+metric,value
+q1_lower_threshold,431.3
+q3_upper_threshold,637.38
+corpus_size_total,26
+documents_with_headings,17
+documents_without_headings,9
+documents_failed,0
+mean_avg_words_per_section,908.87
+median_avg_words_per_section,504.89
+stdev_avg_words_per_section,964.7
+min_avg_words_per_section,218.26
+max_avg_words_per_section,3604.0
