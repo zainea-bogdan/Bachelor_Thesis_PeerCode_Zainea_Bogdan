@@ -1,4 +1,5 @@
 import chromadb
+from chromadb.config import Settings
 import os
 from dotenv import load_dotenv
 load_dotenv()
