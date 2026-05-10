@@ -1,19 +1,20 @@
 import os
 import hashlib
 from sentence_transformers import SentenceTransformer
-
+from dotenv import load_dotenv
 from src.services.ChromaDBClient import ChromaDBClient
 from src.services.DOCXParsingService import DocxParsingService
 from src.services.PdfParsingService import PdfParsingService
 from src.services.PPTXParsingService import PptxParsingService
 
+load_dotenv()
 
 class IngestionService:
 
     # embedding model name
     # same model must be used at ingestion AND retrieval time
     # changing this invalidates all stored vectors in ChromaDB
-    EMBEDDING_MODEL = "all-mpnet-base-v2"
+    EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
 
     def __init__(self):
 

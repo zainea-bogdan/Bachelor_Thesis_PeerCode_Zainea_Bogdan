@@ -17,10 +17,11 @@ from google import genai
 load_dotenv("rag_module/.env")
 
 api_key = os.getenv("GEMINI_API_KEY")
+gemini_model = os.getenv("GEMINI_MODEL")
 client = genai.Client(api_key=api_key)
 
 response = client.models.generate_content(
-    model="gemini-2.5-flash-lite",
+    model=gemini_model,
     contents="Say hello and confirm you are working."
 )
 

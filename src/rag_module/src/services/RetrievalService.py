@@ -17,7 +17,8 @@ class RetrievalService:
 
     # same embedding model as ingestion
     # MUST match — different model = invalid similarity scores
-    EMBEDDING_MODEL = "all-mpnet-base-v2"
+    EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
+    
 
     # commit conventions — fixed platform standard
     # same for every blueprint regardless of course
@@ -39,7 +40,7 @@ class RetrievalService:
 
         # step 3 — initialise Gemini client
         api_key = os.getenv("GEMINI_API_KEY")
-        gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
+        gemini_model = os.getenv("GEMINI_MODEL")
 
         if not api_key:
             raise Exception("GEMINI_API_KEY not found in .env")
