@@ -17,6 +17,7 @@ async def ingest_document(
     university_year: str = Form(...)
 ):
     # step 1 — validate file extension before doing anything
+    
     file_extension = os.path.splitext(file.filename)[1].lower()
 
     if file_extension not in [".pdf", ".docx", ".pptx"]:
@@ -55,3 +56,24 @@ async def ingest_document(
         # runs whether the request succeeded or failed
         if tmp_path and os.path.exists(tmp_path):
             os.unlink(tmp_path)
+
+@router.delete("/ingest/clear")
+def clear_collection():
+    try:
+        # get all IDs in the collection
+        all_items = ingestion_service.chroma.collection.get()
+        all_ids = all_items["ids"]
+
+        if len(all_ids) == 0:
+            return {"status": "already empty", "deleted": 0}
+
+        # delete all chunks
+        ingestion_service.chroma.collection.delete(ids=all_ids)
+
+        return {
+            "status": "success",
+            "deleted": len(all_ids),
+            "message": "ChromaDB collection cleared"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
