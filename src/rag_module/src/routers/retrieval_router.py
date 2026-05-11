@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from src.services.RetrievalService import RetrievalService
+from src.services.rag_services.RetrievalService import RetrievalService
 
 router = APIRouter()
 retrieval_service = RetrievalService()

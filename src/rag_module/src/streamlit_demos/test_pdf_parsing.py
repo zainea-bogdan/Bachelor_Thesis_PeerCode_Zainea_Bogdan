@@ -1,7 +1,7 @@
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from services.PdfParsingService import PdfParsingService
+from rag_module.src.services.parsers.PdfParsingService import PdfParsingService
 import streamlit as st
 import tempfile
 import fitz

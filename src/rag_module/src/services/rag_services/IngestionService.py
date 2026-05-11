@@ -2,28 +2,23 @@ import os
 import hashlib
 from sentence_transformers import SentenceTransformer
 from dotenv import load_dotenv
-from src.services.ChromaDBClient import ChromaDBClient
-from src.services.DOCXParsingService import DocxParsingService
-from src.services.PdfParsingService import PdfParsingService
-from src.services.PPTXParsingService import PptxParsingService
+from src.services.database_client.ChromaDBClient import ChromaDBClient
+from src.services.file_type_parsers.DOCXParsingService import DocxParsingService
+from src.services.file_type_parsers.PdfParsingService import PdfParsingService
+from src.services.file_type_parsers.PPTXParsingService import PptxParsingService
+from src.services.rag_services.EmbeddingModel import EmbeddingModel
+
 
 load_dotenv()
 
 class IngestionService:
-
-    # embedding model name
-    # same model must be used at ingestion AND retrieval time
-    # changing this invalidates all stored vectors in ChromaDB
-    EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
 
     def __init__(self):
 
         # step 1 — load the embedding model once at startup
         # first run downloads ~420MB from HuggingFace cache
         # every subsequent run loads from local disk — no internet needed
-        print(f"Loading embedding model: {self.EMBEDDING_MODEL}")
-        self.embedding_model = SentenceTransformer(self.EMBEDDING_MODEL)
-        print("Embedding model loaded successfully.")
+        self.embedding_model = EmbeddingModel.get_instance()
 
         # step 2 — initialise ChromaDB client
         # connects to persistent storage at CHROMA_PATH from .env
@@ -35,6 +30,8 @@ class IngestionService:
         self.pdf_parser = PdfParsingService()
         self.pptx_parser = PptxParsingService()
 
+
+    
     def ingest_document(
         self,
         file_path: str,
@@ -49,17 +46,11 @@ class IngestionService:
         # step 2 — route to the correct parser
         # each parser returns list[dict] with text + metadata
         if file_extension == ".docx":
-            print(f"Parsing DOCX: {file_path}")
-            chunks = self.docx_parser.parse_docx(file_path)
-
+            chunks = self.docx_parser.parse(file_path)
         elif file_extension == ".pdf":
-            print(f"Parsing PDF: {file_path}")
-            chunks = self.pdf_parser.parse_pdf(file_path)
-
+            chunks = self.pdf_parser.parse(file_path)
         elif file_extension == ".pptx":
-            print(f"Parsing PPTX: {file_path}")
-            chunks = self.pptx_parser.parse_pptx(file_path)
-
+            chunks = self.pptx_parser.parse(file_path)
         else:
             raise Exception(
                 f"Unsupported file type: {file_extension}. "

@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import streamlit as st
 import tempfile
 from docx import Document as DocxDocument
-from services.DOCXParsingService import DocxParsingService
+from rag_module.src.services.parsers.DOCXParsingService import DocxParsingService
 
 st.set_page_config(page_title="DocxParsingService — test harness", layout="wide")
 st.title("DocxParsingService — test harness")

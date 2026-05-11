@@ -7,6 +7,7 @@ import requests
 import json
 import tempfile
 
+
 st.set_page_config(
     page_title="RAG Pipeline — test harness",
     layout="wide",
@@ -280,7 +281,7 @@ with tab_chroma:
         if st.button("Check collection count"):
             try:
                 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-                from src.services.ChromaDBClient import ChromaDBClient
+                from src.services.database_client.ChromaDBClient import ChromaDBClient
                 client = ChromaDBClient()
                 count = client.collection.count()
                 st.metric("Total chunks in ChromaDB", count)

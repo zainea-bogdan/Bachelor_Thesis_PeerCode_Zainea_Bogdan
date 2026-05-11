@@ -2,7 +2,7 @@ import os
 import shutil
 import tempfile
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
-from src.services.IngestionService import IngestionService
+from src.services.rag_services.IngestionService import IngestionService
 
 
 router = APIRouter()

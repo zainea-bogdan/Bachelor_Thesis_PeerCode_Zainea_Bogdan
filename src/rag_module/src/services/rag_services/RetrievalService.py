@@ -2,9 +2,8 @@ import os
 import json
 from dotenv import load_dotenv
 from google import genai
-from sentence_transformers import SentenceTransformer
-
-from src.services.ChromaDBClient import ChromaDBClient
+from src.services.rag_services.EmbeddingModel import EmbeddingModel
+from src.services.database_client.ChromaDBClient import ChromaDBClient
 
 load_dotenv()
 
@@ -14,11 +13,6 @@ class RetrievalService:
     # number of chunks to retrieve per query
     # higher K = more context but more noise risk
     TOP_K = 15
-
-    # same embedding model as ingestion
-    # MUST match — different model = invalid similarity scores
-    EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
-    
 
     # commit conventions — fixed platform standard
     # same for every blueprint regardless of course
@@ -31,9 +25,8 @@ class RetrievalService:
     def __init__(self):
         # step 1 — load embedding model
         # must be the same instance/model used at ingestion time
-        print("Loading embedding model for retrieval...")
-        self.embedding_model = SentenceTransformer(self.EMBEDDING_MODEL)
-        print("Embedding model loaded.")
+        self.embedding_model = EmbeddingModel.get_instance()
+        
 
         # step 2 — initialise ChromaDB client
         self.chroma = ChromaDBClient()
