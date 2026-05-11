@@ -8,36 +8,26 @@ class PptxParsingService(BaseParsingService):
     def _get_document_type(self) -> str:
         return "pptx"
 
-    def _extract_sentences(self, path: str) -> list[dict]:
+    def _extract_text(self, path: str) -> str:
         filename = os.path.basename(path)
-        sentences = []
-        sentence_index = 0
 
         try:
             presentation = Presentation(path)
         except Exception as e:
             raise Exception(f"Failed to open PPTX {filename}: {str(e)}")
 
+        # collect text from every shape on every slide
+        texts = []
         for slide_index in range(len(presentation.slides)):
             slide = presentation.slides[slide_index]
 
-            # collect all shape texts on this slide
             for shape in slide.shapes:
                 if shape.has_text_frame:
-                    for paragraph in shape.text_frame.paragraphs:
-                        text = paragraph.text.strip()
+                    text = shape.text.strip()
+                    if text:
+                        texts.append(text)
 
-                        if self._is_noise(text):
-                            continue
-
-                        # prefix with slide number for context
-                        sentence_text = f"Slide {slide_index + 1}: {text}"
-
-                        sentences.append({
-                            "text": sentence_text,
-                            "index": sentence_index
-                        })
-
-                        sentence_index = sentence_index + 1
-
-        return sentences
+        # join all slide texts into one full text string
+        # nltk will handle sentence splitting in base class
+        full_text = " ".join(texts)
+        return full_text

@@ -1,186 +1,234 @@
-from abc import ABC, abstractmethod
 import os
-from src.services.rag_services.EmbeddingModel import EmbeddingModel
+import numpy as np
+import nltk
+from abc import ABC, abstractmethod
 from sentence_transformers.util import cos_sim
-from dotenv import load_dotenv
+from src.services.rag_services.EmbeddingModel import EmbeddingModel
 
-load_dotenv()
+# download nltk sentence tokenizer on first run
+nltk.download("punkt", quiet=True)
+nltk.download("punkt_tab", quiet=True)
+
 
 class BaseParsingService(ABC):
 
-    # maximum words per chunk — coordinator feedback: ~1000 tokens
-    # 1000 tokens ≈ 750 words in English technical text
-    SECTION_WINDOW = 750
+    # 95th percentile of cosine distances as boundary threshold
+    # justified by: Analysis of Chunking Process in RAG Architectures
+    # (IEEE AINIT 2025) and Optimising retrieval performance in RAG
+    # systems (ScienceDirect 2025)
+    DISTANCE_PERCENTILE = 95
 
-    # semantic similarity threshold
-    # below this value between adjacent sentences = topic boundary
-    # justified by: RAG chunking literature — typical range 0.4-0.6
-    SIMILARITY_THRESHOLD = 0.5
+    # soft token ceiling — preferred chunk size
+    # justified by: coordinator feedback — ~1000 tokens per chunk
+    SOFT_CEILING = 1000
+
+    # hard token ceiling — maximum allowed with soft overflow
+    # 20% buffer above soft ceiling for semantically continuous sentences
+    HARD_CEILING = 1200
 
     def __init__(self):
-        # load embedding model once per parser instance
-        # used to detect semantic boundaries between sentences
+        # get shared embedding model instance — Singleton pattern
+        # model loaded once, reused across all parsing services
         self.embedding_model = EmbeddingModel.get_instance()
-  
 
     # ── abstract method — subclasses must implement ──────────
 
     @abstractmethod
-    def _extract_sentences(self, path: str) -> list[dict]:
-        # each subclass extracts sentences from its own format
-        # must return list of:
-        # { "text": str, "index": int }
+    def _extract_text(self, path: str) -> str:
+        # each subclass extracts full document text
+        # using its own parsing library
+        # returns one complete string — no chunking here
+        pass
+
+    @abstractmethod
+    def _get_document_type(self) -> str:
+        # each subclass returns its document type string
+        # used in chunk metadata
         pass
 
     # ── public entry point ────────────────────────────────────
 
     def parse(self, path: str) -> list[dict]:
-        # step 1 — extract sentences from document
+
+        # step 1 — extract full text from document
         # format-specific — delegated to subclass
-        sentences = self._extract_sentences(path)
+        print(f"Extracting text from {os.path.basename(path)}...")
+        full_text = self._extract_text(path)
 
-        # step 2 — filter noise sentences
-        clean_sentences = []
-        for sentence in sentences:
-            if not self._is_noise(sentence["text"]):
-                clean_sentences.append(sentence)
-
-        # step 3 — check we have something to work with
-        if len(clean_sentences) == 0:
+        if not full_text or len(full_text.strip()) == 0:
+            print("No text extracted — document may be empty or image-only.")
             return []
 
-        # step 4 — semantic chunking
-        # groups sentences into semantically coherent chunks
-        chunks = self._semantic_chunk(
-            sentences=clean_sentences,
-            filename=os.path.basename(path)
-        )
+        # step 2 — split into linguistic sentences using nltk
+        # this is the key difference from word-window chunking
+        # nltk detects actual sentence boundaries, not formatting units
+        print("Splitting into sentences via nltk...")
+        raw_sentences = nltk.sent_tokenize(full_text)
 
-        return chunks
+        # step 3 — filter noise sentences
+        sentences = []
+        for sentence in raw_sentences:
+            if not self._is_noise(sentence):
+                sentences.append(sentence)
 
-    # ── shared semantic chunking logic ────────────────────────
+        print(f"Sentences after noise filtering: {len(sentences)}")
 
-    def _semantic_chunk(
-        self,
-        sentences: list[dict],
-        filename: str
-    ) -> list[dict]:
+        if len(sentences) == 0:
+            return []
 
-        # step 1 — handle edge case: only one sentence
+        # step 4 — handle edge case: single sentence
         if len(sentences) == 1:
             return [self._build_chunk(
-                text=sentences[0]["text"],
-                filename=filename,
+                text=sentences[0],
+                filename=os.path.basename(path),
                 chunk_index=0,
                 strategy="semantic_chunking"
             )]
 
-        # step 2 — embed all sentences in one batch
+        # step 5 — embed all sentences in one batch
         # batching is faster than embedding one by one
-        sentence_texts = []
-        for sentence in sentences:
-            sentence_texts.append(sentence["text"])
-
-        print(f"Embedding {len(sentence_texts)} sentences for semantic analysis...")
+        print(f"Embedding {len(sentences)} sentences for semantic analysis...")
         embeddings = self.embedding_model.encode(
-            sentence_texts,
+            sentences,
             show_progress_bar=False
         )
 
-        # step 3 — compute cosine similarity between adjacent pairs
-        # sim(sentence_i, sentence_i+1) for all i
-        similarities = []
+        # step 6 — compute cosine distances between adjacent pairs
+        # distance = 1 - cosine_similarity
+        # high distance = topic changed
+        # low distance = same topic continuing
+        distances = []
         for i in range(len(embeddings) - 1):
             similarity = cos_sim(embeddings[i], embeddings[i + 1]).item()
-            similarities.append(similarity)
+            distance = 1 - similarity
+            distances.append(distance)
 
-        # step 4 — detect semantic boundaries
-        # a boundary exists where similarity drops below threshold
-        # meaning the topic has changed between sentence i and i+1
-        boundary_indices = []
-        for i in range(len(similarities)):
-            if similarities[i] < self.SIMILARITY_THRESHOLD:
-                boundary_indices.append(i)
+        # step 7 — compute adaptive threshold
+        # 95th percentile of distances in THIS document
+        # only the top 5% most distant transitions = semantic boundaries
+        # document-specific — not imposed externally
+        # justified by IEEE AINIT 2025 and ScienceDirect 2025
+        threshold = np.percentile(distances, self.DISTANCE_PERCENTILE)
+        print(f"Adaptive boundary threshold (95th percentile): {round(threshold, 4)}")
 
-        # step 5 — group sentences into chunks
-        # split at boundary indices
-        chunk_groups = []
-        current_group = []
+        # step 8 — walk sentences and build semantic groups
+        chunks = self._group_sentences(
+            sentences=sentences,
+            distances=distances,
+            threshold=threshold,
+            filename=os.path.basename(path)
+        )
 
-        for i in range(len(sentences)):
-            current_group.append(sentences[i]["text"])
+        print(f"Produced {len(chunks)} semantic chunks.")
+        return chunks
 
-            # check if this position is a boundary
-            if i in boundary_indices:
-                chunk_groups.append(current_group)
-                current_group = []
+    # ── semantic grouping algorithm ───────────────────────────
 
-        # flush remaining sentences as final group
-        if len(current_group) > 0:
-            chunk_groups.append(current_group)
+    def _group_sentences(
+        self,
+        sentences: list[str],
+        distances: list[float],
+        threshold: float,
+        filename: str
+    ) -> list[dict]:
 
-        # step 6 — build chunks from groups
-        # apply 1000-token ceiling as safety net
         chunks = []
         chunk_index = 0
 
-        for group in chunk_groups:
-            group_text = " ".join(group)
+        # accumulator for current group
+        current_group = []
+        current_tokens = 0
 
-            # check if group exceeds ceiling
-            if len(group_text.split()) <= self.SECTION_WINDOW:
-                # fits within limit — emit as one chunk
-                chunks.append(self._build_chunk(
-                    text=group_text,
-                    filename=filename,
-                    chunk_index=chunk_index,
-                    strategy="semantic_chunking"
-                ))
-                chunk_index = chunk_index + 1
+        for i in range(len(sentences)):
 
-            else:
-                # too large — split into windows
-                window_chunks = self._split_into_windows(
-                    text=group_text,
-                    filename=filename,
-                    chunk_index_start=chunk_index
+            sentence = sentences[i]
+            sentence_tokens = len(sentence.split())
+
+            # ── check A — token ceiling ───────────────────────
+            if current_tokens + sentence_tokens > self.SOFT_CEILING:
+
+                # soft ceiling exceeded — check if sentence
+                # is still semantically continuous
+                is_same_topic = (
+                    i > 0 and
+                    distances[i - 1] < threshold
                 )
-                for chunk in window_chunks:
-                    chunks.append(chunk)
-                chunk_index = chunk_index + len(window_chunks)
+                within_hard_ceiling = (
+                    current_tokens + sentence_tokens <= self.HARD_CEILING
+                )
 
-        return chunks
+                if is_same_topic and within_hard_ceiling:
+                    # same topic and within 20% buffer
+                    # include this sentence then flush
+                    current_group.append(sentence)
+                    current_tokens = current_tokens + sentence_tokens
 
-    # ── shared utility methods ────────────────────────────────
+                    chunk_text = " ".join(current_group)
+                    chunks.append(self._build_chunk(
+                        text=chunk_text,
+                        filename=filename,
+                        chunk_index=chunk_index,
+                        strategy="semantic_chunking"
+                    ))
+                    chunk_index = chunk_index + 1
+                    current_group = []
+                    current_tokens = 0
 
-    def _split_into_windows(
-        self,
-        text: str,
-        filename: str,
-        chunk_index_start: int
-    ) -> list[dict]:
-        # splits oversized semantic groups into fixed windows
-        # same sliding window logic as before
-        all_words = text.split()
-        chunks = []
-        chunk_index = chunk_index_start
-        position = 0
+                else:
+                    # different topic or over hard ceiling
+                    # flush current group without this sentence
+                    if len(current_group) > 0:
+                        chunk_text = " ".join(current_group)
+                        chunks.append(self._build_chunk(
+                            text=chunk_text,
+                            filename=filename,
+                            chunk_index=chunk_index,
+                            strategy="semantic_chunking"
+                        ))
+                        chunk_index = chunk_index + 1
 
-        while position < len(all_words):
-            window_words = all_words[position: position + self.SECTION_WINDOW]
-            chunk_text = " ".join(window_words)
+                    # start new group with this sentence
+                    current_group = [sentence]
+                    current_tokens = sentence_tokens
 
+                continue
+
+            # ── check B — semantic boundary ───────────────────
+            if i > 0 and distances[i - 1] >= threshold:
+
+                # topic changed — flush current group
+                if len(current_group) > 0:
+                    chunk_text = " ".join(current_group)
+                    chunks.append(self._build_chunk(
+                        text=chunk_text,
+                        filename=filename,
+                        chunk_index=chunk_index,
+                        strategy="semantic_chunking"
+                    ))
+                    chunk_index = chunk_index + 1
+
+                # start new group with this sentence
+                current_group = [sentence]
+                current_tokens = sentence_tokens
+                continue
+
+            # ── neither — safe to accumulate ──────────────────
+            current_group.append(sentence)
+            current_tokens = current_tokens + sentence_tokens
+
+        # end of document — flush remaining group
+        if len(current_group) > 0:
+            chunk_text = " ".join(current_group)
             chunks.append(self._build_chunk(
                 text=chunk_text,
                 filename=filename,
                 chunk_index=chunk_index,
-                strategy="semantic_chunking_split"
+                strategy="semantic_chunking"
             ))
 
-            chunk_index = chunk_index + 1
-            position = position + self.SECTION_WINDOW
-
         return chunks
+
+    # ── shared utility methods ────────────────────────────────
 
     def _build_chunk(
         self,
@@ -201,11 +249,6 @@ class BaseParsingService(ABC):
             }
         }
         return chunk
-
-    def _get_document_type(self) -> str:
-        # each subclass returns its document type string
-        # used in metadata for ChromaDB storage
-        return "unknown"
 
     @staticmethod
     def _is_noise(text: str) -> bool:
