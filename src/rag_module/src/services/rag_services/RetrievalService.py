@@ -2,41 +2,43 @@ import os
 import json
 from dotenv import load_dotenv
 from google import genai
-from src.services.rag_services.EmbeddingModel import EmbeddingModel
 from src.services.database_client.ChromaDBClient import ChromaDBClient
+from src.services.rag_services.EmbeddingModel import EmbeddingModel
+from src.services.rag_services.ReRankerModel import ReRankerModel
 
 load_dotenv()
 
 
 class RetrievalService:
 
-    # number of chunks to retrieve per query
-    # higher K = more context but more noise risk
+    # number of chunks to retrieve from ChromaDB via cosine similarity
+    # higher K = more candidates for re-ranker to score
     TOP_K = 15
 
-    # commit conventions — fixed platform standard
-    # same for every blueprint regardless of course
-    COMMIT_CONVENTIONS = {
-        "DONE": "used for completed working features pushed at end of session",
-        "FIX": "used for bug fixes or broken code corrections pushed",
-        "WIP": "work in progress — not yet functional, pushed for backup only"
-    }
+    # number of top chunks to keep after re-ranking
+    # only these go into the Gemini prompt
+    TOP_N_AFTER_RERANK = 5
 
     def __init__(self):
-        # step 1 — load embedding model
-        # must be the same instance/model used at ingestion time
+        # step 1 — load shared embedding model — Singleton
+        print("Loading embedding model for retrieval...")
         self.embedding_model = EmbeddingModel.get_instance()
-        
+        print("Embedding model loaded.")
 
-        # step 2 — initialise ChromaDB client
+        # step 2 — load shared re-ranker model — Singleton
+        self.reranker = ReRankerModel.get_instance()
+
+        # step 3 — initialise ChromaDB client
         self.chroma = ChromaDBClient()
 
-        # step 3 — initialise Gemini client
+        # step 4 — initialise Gemini client
         api_key = os.getenv("GEMINI_API_KEY")
         gemini_model = os.getenv("GEMINI_MODEL")
 
         if not api_key:
             raise Exception("GEMINI_API_KEY not found in .env")
+        if not gemini_model:
+            raise Exception("GEMINI_MODEL not found in .env")
 
         self.gemini_client = genai.Client(api_key=api_key)
         self.gemini_model = gemini_model
@@ -55,14 +57,11 @@ class RetrievalService:
     ) -> dict:
 
         # step 1 — embed the teacher's context text
-        # this produces a 768-dim vector representing
-        # the semantic meaning of what the teacher wants
         print("Embedding teacher context...")
         context_embedding = self.embedding_model.encode(context)
         context_embedding_list = context_embedding.tolist()
 
-        # step 2 — check total chunks available in ChromaDB
-        # prevents querying more chunks than exist
+        # step 2 — check total chunks available
         total_count = self.chroma.collection.count()
         print(f"Total chunks in ChromaDB: {total_count}")
 
@@ -71,15 +70,10 @@ class RetrievalService:
                 "ChromaDB is empty. Upload course materials first via /ingest."
             )
 
-        # use minimum of TOP_K and available chunks
-        # avoids ChromaDB error when n_results > total documents
         k = min(self.TOP_K, total_count)
 
-        # step 3 — query ChromaDB for top-K similar chunks
-        # filtered to this specific course and teacher only
-        # this ensures we only retrieve relevant course materials
+        # step 3 — retrieve top-K chunks via cosine similarity
         print(f"Querying ChromaDB for top {k} chunks...")
-
         query_results = self.chroma.collection.query(
             query_embeddings=[context_embedding_list],
             n_results=k,
@@ -91,36 +85,63 @@ class RetrievalService:
             }
         )
 
-        # step 4 — extract the retrieved chunks
         retrieved_documents = query_results["documents"][0]
         retrieved_metadatas = query_results["metadatas"][0]
         retrieved_ids = query_results["ids"][0]
 
-        # check we got any results at all
         if len(retrieved_documents) == 0:
             raise Exception(
                 f"No chunks found for course_id={course_id} and "
                 f"teacher_id={teacher_id}. "
-                f"Make sure documents were uploaded with matching course_id and teacher_id."
+                f"Make sure documents were uploaded with matching metadata."
             )
 
         print(f"Retrieved {len(retrieved_documents)} chunks from ChromaDB.")
 
-        # step 5 — assemble the context block from retrieved chunks
-        # each chunk is numbered so the LLM can reference them
+        # step 4 — re-rank retrieved chunks using cross-encoder
+        # cross-encoder reads query + chunk together — more precise than cosine
+        # scores each of the 15 candidates against the teacher context
+        print(f"Re-ranking {len(retrieved_documents)} chunks...")
+
+        # build pairs of [query, chunk] for the cross-encoder
+        rerank_pairs = []
+        for doc in retrieved_documents:
+            rerank_pairs.append([context, doc])
+
+        # score all pairs — higher score = more relevant
+        rerank_scores = self.reranker.predict(rerank_pairs)
+
+        # zip chunks with their scores for sorting
+        scored_chunks = []
+        for i in range(len(retrieved_documents)):
+            scored_chunks.append({
+                "document": retrieved_documents[i],
+                "metadata": retrieved_metadatas[i],
+                "id": retrieved_ids[i],
+                "score": float(rerank_scores[i])
+            })
+
+        # sort by score descending — most relevant first
+        scored_chunks.sort(key=lambda x: x["score"], reverse=True)
+
+        # keep only top N after re-ranking
+        top_chunks = scored_chunks[:self.TOP_N_AFTER_RERANK]
+
+        print(f"Re-ranking complete. Kept top {len(top_chunks)} chunks.")
+        print(f"Top chunk scores: {[round(c['score'], 3) for c in top_chunks]}")
+
+        # step 5 — assemble context block from re-ranked chunks
         context_block = ""
-        for index in range(len(retrieved_documents)):
+        for index in range(len(top_chunks)):
             context_block = context_block + f"\n--- Chunk {index + 1} ---\n"
-            context_block = context_block + retrieved_documents[index]
+            context_block = context_block + top_chunks[index]["document"]
             context_block = context_block + "\n"
 
-        # step 6 — build the few-shot example
-        # this shows Gemini exactly what JSON structure we expect
-        # one complete example is enough to guide the model
+        # step 6 — build few-shot example
         few_shot_example = """
 {
     "title": "Student Grade Management System",
-    "context_description": "A backend application for managing student grades using ORM and relational database design. Students will practice entity relationships, CRUD operations, and API design.",
+    "context_description": "A backend application for managing student grades using ORM and relational database design.",
     "minimum_specs": [
         "Implement at least 3 related database entities with proper relationships",
         "Use an ORM library for all database interactions",
@@ -135,7 +156,7 @@ class RetrievalService:
         "src/controllers/": "business logic layer",
         "tests/": "unit and integration tests",
         ".gitignore": "must exclude node_modules, .env, dist/",
-        ".env.example": "template with all required environment variables — no real values"
+        ".env.example": "template with all required environment variables"
     },
     "commit_conventions": {
         "DONE": "used for completed working features pushed at end of session",
@@ -149,9 +170,7 @@ class RetrievalService:
 }
 """
 
-        # step 7 — build the full prompt
-        # includes: course context, retrieved chunks,
-        # teacher inputs, few-shot example, strict instructions
+        # step 7 — build prompt
         domain_line = (
             f"Application domain: {domain}"
             if domain
@@ -181,7 +200,7 @@ Difficulty levels:
 Start date: {start_date}
 Deadline: {deadline}
 
-COURSE MATERIALS (retrieved from uploaded documents):
+COURSE MATERIALS (retrieved and re-ranked from uploaded documents):
 {context_block}
 
 INSTRUCTIONS:
@@ -212,13 +231,10 @@ Generate {projects_count} blueprint(s) now:
         raw_response = response.text
         print("Gemini response received.")
 
-        # step 9 — parse the JSON response
-        # clean any potential markdown fences Gemini might add
+        # step 9 — parse JSON response
         cleaned_response = raw_response.strip()
-
         if cleaned_response.startswith("```"):
             lines = cleaned_response.split("\n")
-            # remove first line (```json or ```) and last line (```)
             cleaned_response = "\n".join(lines[1:-1])
 
         try:
@@ -229,16 +245,17 @@ Generate {projects_count} blueprint(s) now:
                 f"Raw response preview: {raw_response[:500]}"
             )
 
-        # step 10 — build chunk sources for teacher traceability
-        # teacher sees which chunks were used to generate the blueprints
+        # step 10 — build chunk sources for traceability
+        # shows teacher which chunks were used after re-ranking
         chunks_used = []
-        for index in range(len(retrieved_ids)):
+        for index in range(len(top_chunks)):
             chunk_source = {
-                "chunk_id": retrieved_ids[index],
-                "source_filename": retrieved_metadatas[index].get("source_filename", "unknown"),
-                "document_type": retrieved_metadatas[index].get("document_type", "unknown"),
-                "strategy_used": retrieved_metadatas[index].get("strategy_used", "unknown"),
-                "preview": retrieved_documents[index][:150] + "..."
+                "chunk_id": top_chunks[index]["id"],
+                "source_filename": top_chunks[index]["metadata"].get("source_filename", "unknown"),
+                "document_type": top_chunks[index]["metadata"].get("document_type", "unknown"),
+                "strategy_used": top_chunks[index]["metadata"].get("strategy_used", "unknown"),
+                "rerank_score": round(top_chunks[index]["score"], 3),
+                "preview": top_chunks[index]["document"][:150] + "..."
             }
             chunks_used.append(chunk_source)
 
