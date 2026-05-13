@@ -15,7 +15,7 @@ st.set_page_config(
 )
 
 # ── config ────────────────────────────────────────────────────
-BASE_URL = "http://127.0.0.1:8001"
+BASE_URL = "http://127.0.0.1:8002"
 
 # ── sidebar ───────────────────────────────────────────────────
 st.sidebar.title("RAG test harness")
@@ -89,7 +89,7 @@ with tab_ingest:
                         f"{BASE_URL}/ingest",
                         files=files,
                         data=data,
-                        timeout=120
+                        timeout=600
                     )
 
                     if response.status_code == 200:

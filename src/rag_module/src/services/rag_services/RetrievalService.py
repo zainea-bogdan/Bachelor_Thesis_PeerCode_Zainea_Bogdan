@@ -124,8 +124,25 @@ class RetrievalService:
         # sort by score descending — most relevant first
         scored_chunks.sort(key=lambda x: x["score"], reverse=True)
 
+        # cross-encoder scores below 0 mean the chunk is not relevant to the query
+        # reject them so the prompt only contains material the teacher actually provided
+        positive_chunks = [c for c in scored_chunks if c["score"] > 0]
+
+        if not positive_chunks:
+            raise Exception(
+                "None of the retrieved chunks scored positively against your context. "
+                "The uploaded course materials do not appear to cover the topic you described. "
+                "Upload relevant documents before generating blueprints."
+            )
+
+        if len(positive_chunks) < self.TOP_N_AFTER_RERANK:
+            print(
+                f"Warning: only {len(positive_chunks)} chunk(s) scored positively "
+                f"(expected {self.TOP_N_AFTER_RERANK}). Proceeding with available chunks."
+            )
+
         # keep only top N after re-ranking
-        top_chunks = scored_chunks[:self.TOP_N_AFTER_RERANK]
+        top_chunks = positive_chunks[:self.TOP_N_AFTER_RERANK]
 
         print(f"Re-ranking complete. Kept top {len(top_chunks)} chunks.")
         print(f"Top chunk scores: {[round(c['score'], 3) for c in top_chunks]}")
