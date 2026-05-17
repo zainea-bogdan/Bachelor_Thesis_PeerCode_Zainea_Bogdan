@@ -330,4 +330,65 @@ class CommitsMetricsService:
                 "metadata_dates": metadata_dates,
             }
         }
- 
+
+    def analyse_contributors_percentage(
+        self,
+        commits: list,
+        github_username: str,
+        repo_name: str,
+        project_start_date: str,
+        deadline: str,
+    ) -> dict:
+
+        thresholds = DEFAULT_THRESHOLDS
+        total = len(commits)
+
+        if total == 0:
+            return {
+                "status": "no_commits",
+                "error": "No commits found in the project window."
+            }
+
+        contributor_counts = {}
+        for commit in commits:
+            login = commit.get("commit_author_login") or "unknown"
+            contributor_counts[login] = contributor_counts.get(login, 0) + 1
+
+        contributors = []
+        for login, count in sorted(contributor_counts.items(), key=lambda x: x[1], reverse=True):
+            contributor = {
+                "login": login,
+                "commit_count": count,
+                "percentage": round(count / total, 4),
+                "is_student": login == github_username,
+            }
+            contributors.append(contributor)
+
+        student_share = 0
+        for contributor in contributors:
+            if contributor["is_student"]:
+                student_share = contributor["percentage"]
+                break
+
+        flags = []
+        if student_share < thresholds["high_external_author_ratio"]:
+            flags.append({
+                "name": "LOW_STUDENT_AUTHORSHIP",
+                "type": "warning",
+                "description": f"{github_username} authored only {round(student_share * 100)}% of commits — a significant portion was pushed by other identities (bots, external contributors)."
+            })
+
+        return {
+            "status": "success",
+            "contributors_percentage_analysis": {
+                "repo": repo_name,
+                "category": "contributors_percentage_analysis",
+                "project_start": project_start_date,
+                "deadline": deadline,
+                "total_commits": total,
+                "contributors": contributors,
+                "flags": flags,
+            }
+        }
+
+
