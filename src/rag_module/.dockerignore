@@ -1,0 +1,21 @@
+README.md
+
+# Demo and research — not needed in production image
+src/streamlit_demos/
+threshold_research_analysis/
+
+# ChromaDB data — mounted as a volume at runtime
+src/chromadb/
+
+# Local environment — secrets are passed via docker run -e flags
+.env
+
+# Python cache
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Test materials inside parsers (large sample docs)
+src/services/file_type_parsers/test_materials/
