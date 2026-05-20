@@ -7,3 +7,4 @@ documents
 test_materials
 src/pdf_parser/marker_model_cache/*
 !src/pdf_parser/marker_model_cache/.gitkeep
+postgres_data/
