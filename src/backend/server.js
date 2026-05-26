@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const { sequelize } = require("./models/index");
 const authRoutes = require("./routers/authRouter");
+const router = require("./routers/index");
 
 const app = express();
 app.use(express.json());
