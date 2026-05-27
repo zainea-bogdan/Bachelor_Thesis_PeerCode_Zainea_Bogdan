@@ -26,8 +26,10 @@ const ragService = {
     return response.data;
   },
 
-  deleteChunks: async (documentId) => {
-    const response = await axios.delete(`${RAG_MODULE_URL}/documents/${documentId}`);
+  deleteChunks: async (filename, courseId, teacherId) => {
+    const response = await axios.delete(`${RAG_MODULE_URL}/documents`, {
+      data: { filename, course_id: courseId, teacher_id: teacherId },
+    });
     return response.data;
   },
 };

@@ -18,6 +18,20 @@ const CourseController = {
         return res.status(404).json({ error: "Subject not found" });
       }
 
+      // duplication check
+      const existingCourse = await Course.findOne({
+        where: {
+          teacher_id: req.user.id,
+          subject_id,
+          university_year,
+          type,
+          series: series || null,
+        },
+      });
+      if (existingCourse) {
+        return res.status(409).json({ error: "Course already exists for this subject, year, type and series" });
+      }
+
       let course_code = generateCourseCode();
       let existing = await Course.findOne({ where: { course_code } });
       while (existing) {

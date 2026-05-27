@@ -17,6 +17,14 @@ const DocumentController = {
         return res.status(400).json({ error: "File is required" });
       }
 
+      // define filename first
+      const filename = req.file.originalname;
+      const fileExtension = path.extname(filename).toLowerCase().replace(".", "");
+
+      if (!["pdf", "docx", "pptx"].includes(fileExtension)) {
+        return res.status(400).json({ error: "Only pdf, docx and pptx files are allowed" });
+      }
+
       const course = await Course.findOne({
         where: { id: course_id, teacher_id: req.user.id },
       });
@@ -25,11 +33,12 @@ const DocumentController = {
         return res.status(404).json({ error: "Course not found" });
       }
 
-      const filename = req.file.originalname;
-      const fileExtension = path.extname(filename).toLowerCase().replace(".", "");
-
-      if (!["pdf", "docx", "pptx"].includes(fileExtension)) {
-        return res.status(400).json({ error: "Only pdf, docx and pptx files are allowed" });
+      // duplication check — after filename is defined
+      const existingDocument = await Document.findOne({
+        where: { course_id, filename, teacher_id: req.user.id },
+      });
+      if (existingDocument) {
+        return res.status(409).json({ error: "Document with this filename already exists for this course" });
       }
 
       // upload to local storage (GCS later)
@@ -48,14 +57,12 @@ const DocumentController = {
       // try to ingest into RAG module
       try {
         await ragService.ingestDocument(gcs_path, filename, course_id, req.user.id);
-
         await document.update({
           is_indexed: true,
           chroma_chunk_ids: [],
         });
       } catch (ragErr) {
         console.error("RAG ingestion failed:", ragErr.message);
-        // document saved but not indexed — is_indexed stays false
       }
 
       // notify enrolled students
@@ -119,7 +126,7 @@ const DocumentController = {
       // delete chunks from ChromaDB via RAG module
       if (document.is_indexed) {
         try {
-          await ragService.deleteChunks(document.id);
+          await ragService.deleteChunks(document.filename, document.course_id, document.teacher_id);
         } catch (ragErr) {
           console.error("RAG chunk deletion failed:", ragErr.message);
         }

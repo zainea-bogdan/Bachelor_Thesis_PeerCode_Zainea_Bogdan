@@ -37,7 +37,8 @@ class IngestionService:
         file_path: str,
         course_id: str,
         teacher_id: str,
-        university_year: str
+        university_year: str,
+        original_filename: str = None 
     ) -> dict:
 
         # step 1 — detect file type from extension
@@ -105,7 +106,7 @@ class IngestionService:
             # enrich the parser metadata with course and teacher context
             # this is the full metadata stored in ChromaDB per chunk
             enriched_metadata = {
-                "source_filename": chunk["metadata"]["source_filename"],
+                "source_filename": original_filename or os.path.basename(file_path),
                 "document_type": chunk["metadata"]["document_type"],
                 "chunk_index": chunk["metadata"]["chunk_index"],
                 "strategy_used": chunk["metadata"]["strategy_used"],

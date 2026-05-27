@@ -81,7 +81,7 @@ const GitAnalysisController = {
         const deadline = blueprintContent.deadline;
 
         try {
-          const analysisResult = await gitService.analyzeStudent(student.github_username, repoName, startDate, deadline);
+          const analysisResult = await gitService.analyzeStudent(student.github_username, repoName, startDate, deadline, thresholds);
 
           const metrics = analysisResult?.commits_timeline_analysis_metrics?.metrics || {};
 
