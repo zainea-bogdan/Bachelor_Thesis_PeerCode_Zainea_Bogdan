@@ -8,7 +8,7 @@ const SALT_ROUNDS = 10;
 const AuthController = {
   register: async (req, res, next) => {
     try {
-      const { name, email, password, role } = req.body;
+      const { name, email, password, role, github_username, university, speciality, year } = req.body;
 
       if (!name || !email || !password || !role) {
         return res.status(400).json({ error: "All fields are required" });
@@ -28,7 +28,7 @@ const AuthController = {
       } else {
         const existing = await Student.findOne({ where: { email } });
         if (existing) return res.status(409).json({ error: "Email already in use" });
-        user = await Student.create({ name, email, password_hash });
+        user = await Student.create({ name, email, password_hash, github_username, university, speciality, year });
       }
 
       const token = jwt.sign({ id: user.id, role, email: user.email }, JWT_SECRET, { expiresIn: JWT_EXPIRY });

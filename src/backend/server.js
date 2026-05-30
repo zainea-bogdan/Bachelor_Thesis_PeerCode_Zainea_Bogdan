@@ -24,7 +24,7 @@ const start = async () => {
   try {
     await sequelize.authenticate();
     console.log("PostgreSQL connected successfully");
-    await sequelize.sync({ alter: true });
+    await sequelize.sync({ force: true });
     console.log("All models synchronized successfully");
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
