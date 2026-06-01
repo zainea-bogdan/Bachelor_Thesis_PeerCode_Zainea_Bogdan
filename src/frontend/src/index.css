@@ -1,0 +1,12 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  background: #faf5ef;
+  color: #2c1a0e;
+  -webkit-font-smoothing: antialiased;
+}

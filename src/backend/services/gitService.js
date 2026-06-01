@@ -12,6 +12,15 @@ const gitService = {
     });
     return response.data;
   },
+  getCommits: async (username, repoName, startDate, deadline) => {
+    const response = await axios.get(`${GIT_ANALYSIS_URL}/api/user/${username}/repos/${repoName}/commits`, { params: { start_date: startDate, deadline } });
+    return response.data;
+  },
+
+  getOneCommit: async (username, repoName, commitSha) => {
+    const response = await axios.get(`${GIT_ANALYSIS_URL}/api/user/${username}/repos/${repoName}/commits/${commitSha}`);
+    return response.data;
+  },
 };
 
 module.exports = gitService;

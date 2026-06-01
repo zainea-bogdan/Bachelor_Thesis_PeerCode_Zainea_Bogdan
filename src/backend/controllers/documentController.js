@@ -7,7 +7,7 @@ const path = require("path");
 const DocumentController = {
   uploadDocument: async (req, res, next) => {
     try {
-      const { course_id } = req.body;
+      const { course_id, week_number } = req.body;
 
       if (!course_id) {
         return res.status(400).json({ error: "course_id is required" });
@@ -52,6 +52,7 @@ const DocumentController = {
         gcs_path,
         file_type: fileExtension,
         is_indexed: false,
+        week_number: week_number ? parseInt(week_number) : null,
       });
 
       // try to ingest into RAG module
@@ -101,7 +102,10 @@ const DocumentController = {
 
       const documents = await Document.findAll({
         where: { course_id: req.params.course_id },
-        order: [["createdAt", "DESC"]],
+        order: [
+          ["week_number", "ASC"],
+          ["createdAt", "DESC"],
+        ],
       });
 
       res.status(200).json(documents);
@@ -109,7 +113,36 @@ const DocumentController = {
       next(err);
     }
   },
-  // to be changed in the near future
+  downloadDocument: async (req, res, next) => {
+    try {
+      const { token } = req.query;
+
+      if (!token) {
+        return res.status(401).json({ error: "Token required" });
+      }
+
+      const jwt = require("jsonwebtoken");
+      const { JWT_SECRET } = require("../config/auth");
+
+      let decoded;
+      try {
+        decoded = jwt.verify(token, JWT_SECRET);
+      } catch (err) {
+        return res.status(401).json({ error: "Invalid or expired token" });
+      }
+
+      const document = await Document.findByPk(req.params.id);
+
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+
+      const filePath = path.resolve(document.gcs_path);
+      res.download(filePath, document.filename);
+    } catch (err) {
+      next(err);
+    }
+  },
   deleteDocument: async (req, res, next) => {
     try {
       const document = await Document.findOne({

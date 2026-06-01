@@ -1,11 +1,13 @@
 require("dotenv").config();
 const express = require("express");
+const cors = require("cors");
 const { sequelize } = require("./models/index");
 const authRoutes = require("./routers/authRouter");
 const router = require("./routers/index");
 
 const app = express();
 app.use(express.json());
+app.use(cors({ origin: "http://localhost:5173" }));
 
 // routes
 app.use("/api", router);
@@ -24,7 +26,7 @@ const start = async () => {
   try {
     await sequelize.authenticate();
     console.log("PostgreSQL connected successfully");
-    await sequelize.sync({ force: true });
+    await sequelize.sync({ alter: true });
     console.log("All models synchronized successfully");
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

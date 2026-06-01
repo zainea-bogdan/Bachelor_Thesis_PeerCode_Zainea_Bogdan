@@ -48,6 +48,14 @@ const Course = sequelize.define(
       allowNull: false,
       unique: true,
     },
+    start_date: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
+    end_date: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
     git_thresholds: {
       type: DataTypes.JSONB,
       allowNull: true,

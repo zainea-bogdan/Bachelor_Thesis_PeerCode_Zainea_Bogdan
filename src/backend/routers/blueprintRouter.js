@@ -11,5 +11,8 @@ router.patch("/:id/assign", authMiddleware, role("teacher"), BlueprintController
 router.get("/course/:course_id", authMiddleware, BlueprintController.getCourseBlueprintsController);
 router.get("/course/:course_id/available", authMiddleware, role("student"), BlueprintController.getAvailableBlueprints);
 router.post("/:id/join", authMiddleware, role("student"), AssignmentController.joinBlueprint);
+router.patch("/:id/content", authMiddleware, role("teacher"), BlueprintController.updateBlueprintContent);
+router.patch("/:id/unassign", authMiddleware, role("teacher"), BlueprintController.unassignBlueprint);
+router.patch("/:id/unconfirm", authMiddleware, role("teacher"), BlueprintController.unconfirmBlueprint);
 
 module.exports = router;

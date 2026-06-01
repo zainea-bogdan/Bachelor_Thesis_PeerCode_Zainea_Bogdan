@@ -58,7 +58,26 @@ const BlueprintController = {
       next(err);
     }
   },
+  updateBlueprintContent: async (req, res, next) => {
+    try {
+      const blueprint = await Blueprint.findOne({
+        where: { id: req.params.id, teacher_id: req.user.id },
+      });
 
+      if (!blueprint) {
+        return res.status(404).json({ error: "Blueprint not found" });
+      }
+
+      if (blueprint.status !== "generated") {
+        return res.status(400).json({ error: "Only generated blueprints can be edited" });
+      }
+
+      await blueprint.update({ content: req.body.content });
+      res.status(200).json({ message: "Blueprint updated", blueprint });
+    } catch (err) {
+      next(err);
+    }
+  },
   confirmBlueprint: async (req, res, next) => {
     try {
       const blueprint = await Blueprint.findOne({
@@ -79,7 +98,26 @@ const BlueprintController = {
       next(err);
     }
   },
+  unconfirmBlueprint: async (req, res, next) => {
+    try {
+      const blueprint = await Blueprint.findOne({
+        where: { id: req.params.id, teacher_id: req.user.id },
+      });
 
+      if (!blueprint) {
+        return res.status(404).json({ error: "Blueprint not found" });
+      }
+
+      if (blueprint.status !== "confirmed") {
+        return res.status(400).json({ error: "Only confirmed blueprints can be unconfirmed" });
+      }
+
+      await blueprint.update({ status: "generated" });
+      res.status(200).json({ message: "Blueprint unconfirmed", blueprint });
+    } catch (err) {
+      next(err);
+    }
+  },
   assignBlueprint: async (req, res, next) => {
     try {
       const blueprint = await Blueprint.findOne({
@@ -121,7 +159,26 @@ const BlueprintController = {
       next(err);
     }
   },
+  unassignBlueprint: async (req, res, next) => {
+    try {
+      const blueprint = await Blueprint.findOne({
+        where: { id: req.params.id, teacher_id: req.user.id },
+      });
 
+      if (!blueprint) {
+        return res.status(404).json({ error: "Blueprint not found" });
+      }
+
+      if (blueprint.status !== "assigned") {
+        return res.status(400).json({ error: "Only assigned blueprints can be unassigned" });
+      }
+
+      await blueprint.update({ status: "confirmed" });
+      res.status(200).json({ message: "Blueprint unassigned", blueprint });
+    } catch (err) {
+      next(err);
+    }
+  },
   getCourseBlueprintsController: async (req, res, next) => {
     try {
       const course = await Course.findByPk(req.params.course_id);

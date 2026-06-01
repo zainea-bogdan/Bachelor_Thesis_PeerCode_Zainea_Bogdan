@@ -7,7 +7,7 @@ const generateCourseCode = () => {
 const CourseController = {
   createCourse: async (req, res, next) => {
     try {
-      const { subject_id, university_year, type, series, student_year } = req.body;
+      const { subject_id, university_year, type, series, student_year, start_date, end_date } = req.body;
 
       if (!subject_id || !university_year || !type) {
         return res.status(400).json({ error: "subject_id, university_year and type are required" });
@@ -46,6 +46,8 @@ const CourseController = {
         type,
         series,
         course_code,
+        start_date,
+        end_date,
       });
 
       // auto-enroll matching students
@@ -72,24 +74,10 @@ const CourseController = {
       next(err);
     }
   },
-
-  getCourses: async (req, res, next) => {
-    try {
-      const courses = await Course.findAll({
-        where: { teacher_id: req.user.id },
-        include: [{ model: Subject, attributes: ["name", "credits"] }],
-        order: [["createdAt", "DESC"]],
-      });
-      res.status(200).json(courses);
-    } catch (err) {
-      next(err);
-    }
-  },
-
   getCourseById: async (req, res, next) => {
     try {
       const course = await Course.findOne({
-        where: { id: req.params.id, teacher_id: req.user.id },
+        where: { id: req.params.id },
         include: [{ model: Subject, attributes: ["name", "credits"] }],
       });
 
@@ -98,6 +86,36 @@ const CourseController = {
       }
 
       res.status(200).json(course);
+    } catch (err) {
+      next(err);
+    }
+  },
+  getStudentCourses: async (req, res, next) => {
+    try {
+      const { Subject } = require("../models/index");
+      const enrollments = await CourseEnrollment.findAll({
+        where: { student_id: req.user.id },
+        include: [
+          {
+            model: Course,
+            include: [{ model: Subject, attributes: ["name"] }],
+          },
+        ],
+        order: [["createdAt", "DESC"]],
+      });
+      res.status(200).json(enrollments);
+    } catch (err) {
+      next(err);
+    }
+  },
+  getCourses: async (req, res, next) => {
+    try {
+      const courses = await Course.findAll({
+        where: { teacher_id: req.user.id },
+        include: [{ model: Subject, attributes: ["name", "credits"] }],
+        order: [["createdAt", "DESC"]],
+      });
+      res.status(200).json(courses);
     } catch (err) {
       next(err);
     }
@@ -114,6 +132,24 @@ const CourseController = {
       }
 
       await course.update(req.body);
+
+      // sync blueprint dates if course dates changed
+      if (req.body.start_date || req.body.end_date) {
+        const { Blueprint } = require("../models/index");
+        const blueprints = await Blueprint.findAll({
+          where: { course_id: req.params.id },
+        });
+
+        for (const bp of blueprints) {
+          const updatedContent = {
+            ...bp.content,
+            start_date: req.body.start_date || bp.content.start_date,
+            deadline: req.body.end_date || bp.content.deadline,
+          };
+          await bp.update({ content: updatedContent });
+        }
+      }
+
       res.status(200).json({ message: "Course updated", course });
     } catch (err) {
       next(err);

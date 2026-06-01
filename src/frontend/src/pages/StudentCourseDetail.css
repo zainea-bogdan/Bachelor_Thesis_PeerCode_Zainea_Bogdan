@@ -1,0 +1,77 @@
+.student-blueprints {
+  margin-bottom: 40px;
+}
+
+.student-blueprints h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2c1a0e;
+  margin-bottom: 16px;
+}
+
+.student-bp-card {
+  background: #fdfaf6;
+  border: 1px solid #d4b896;
+  border-radius: 14px;
+  padding: 24px;
+}
+
+.student-bp-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.student-bp-card h3 {
+  font-size: 17px;
+  font-weight: 600;
+  color: #2c1a0e;
+  margin: 0 0 6px;
+}
+
+.student-bp-card p {
+  font-size: 13px;
+  color: #8c6a50;
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+
+.student-bp-footer {
+  padding-top: 16px;
+  border-top: 1px solid #ede0cc;
+}
+
+.assignment-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.assign-status {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+}
+
+.assign-status--in_progress {
+  background: #ead5c0;
+  color: #7a4a28;
+}
+
+.assign-status--submitted {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.assign-status--under_review {
+  background: #e6f0fb;
+  color: #1a4a8a;
+}
+
+.assign-status--reviewed {
+  background: #e6f4ea;
+  color: #2d6a4f;
+}

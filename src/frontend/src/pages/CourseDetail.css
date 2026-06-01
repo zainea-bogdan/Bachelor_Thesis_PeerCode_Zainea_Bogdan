@@ -1,0 +1,396 @@
+.course-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #d4b896;
+}
+
+.course-header-left h1 {
+  font-size: 26px;
+  font-weight: 600;
+  color: #2c1a0e;
+  margin: 8px 0 4px;
+}
+
+.course-header-left p {
+  font-size: 14px;
+  color: #8c6a50;
+}
+
+.btn-generate {
+  width: 100%;
+  padding: 16px;
+  background: #c4773a;
+  color: #faf5ef;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 32px;
+  transition: background 0.15s ease;
+  letter-spacing: 0.01em;
+}
+
+.btn-generate:hover {
+  background: #a05c25;
+}
+
+.weeks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.week-item {
+  background: #fdfaf6;
+  border: 1px solid #d4b896;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.week-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.week-header:hover {
+  background: #f5ede0;
+}
+
+.week-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.week-number {
+  font-size: 15px;
+  font-weight: 600;
+  color: #2c1a0e;
+}
+
+.week-doc-count {
+  font-size: 12px;
+  color: #8c6a50;
+  background: #ede0cc;
+  padding: 2px 10px;
+  border-radius: 20px;
+}
+
+.week-arrow {
+  font-size: 11px;
+  color: #8c6a50;
+}
+
+.week-docs {
+  border-top: 1px solid #ede0cc;
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.no-docs {
+  font-size: 13px;
+  color: #b89a80;
+  padding: 4px 0;
+}
+
+.doc-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: #faf5ef;
+  border: 1px solid #ede0cc;
+  border-radius: 8px;
+}
+
+.doc-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.doc-type {
+  font-size: 11px;
+  font-weight: 600;
+  background: #ead5c0;
+  color: #7a4a28;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.doc-name {
+  font-size: 14px;
+  color: #2c1a0e;
+  font-weight: 500;
+}
+
+.doc-status {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.doc-status.indexed {
+  background: #e6f4ea;
+  color: #2d6a4f;
+}
+
+.doc-status.not-indexed {
+  background: #fde8e8;
+  color: #8b2020;
+}
+
+.doc-delete {
+  padding: 5px 12px;
+  background: transparent;
+  border: 1px solid #f5c0c0;
+  border-radius: 6px;
+  color: #8b2020;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.doc-delete:hover {
+  background: #fde8e8;
+}
+
+.upload-btn {
+  display: inline-block;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px dashed #d4b896;
+  border-radius: 8px;
+  color: #7a4a28;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+  margin-top: 4px;
+}
+
+.upload-btn:hover {
+  background: #ede0cc;
+  border-style: solid;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 80px 24px;
+  color: #8c6a50;
+  font-size: 15px;
+}
+
+.course-badge {
+  display: inline-block;
+  background: #ead5c0;
+  color: #7a4a28;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+.doc-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.doc-download {
+  padding: 5px 12px;
+  background: transparent;
+  border: 1px solid #d4b896;
+  border-radius: 6px;
+  color: #7a4a28;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.doc-download:hover {
+  background: #ede0cc;
+}
+.blueprint-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.blueprint-card-header:hover {
+  background: #f5ede0;
+}
+
+.blueprint-card-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.blueprint-card-title h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #2c1a0e;
+  margin: 0;
+}
+
+.blueprint-card-title p {
+  font-size: 13px;
+  color: #8c6a50;
+  margin: 0;
+}
+
+.blueprint-card-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.blueprint-body {
+  border-top: 1px solid #ede0cc;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.blueprint-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8c6a50;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.blueprint-field p {
+  font-size: 14px;
+  color: #2c1a0e;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.blueprint-field ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.blueprint-field ul li {
+  font-size: 14px;
+  color: #2c1a0e;
+  padding: 6px 10px;
+  background: #faf5ef;
+  border-radius: 6px;
+  border: 1px solid #ede0cc;
+}
+
+.blueprint-field code {
+  font-family: monospace;
+  font-size: 13px;
+  color: #7a4a28;
+  font-weight: 600;
+}
+
+.blueprint-field textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d4b896;
+  border-radius: 8px;
+  background: #faf5ef;
+  color: #2c1a0e;
+  font-size: 14px;
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.blueprint-field textarea:focus {
+  border-color: #7a4a28;
+}
+
+.blueprint-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding-top: 16px;
+  border-top: 1px solid #ede0cc;
+}
+
+.blueprints-section {
+  margin-top: 48px;
+}
+
+.blueprints-section h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2c1a0e;
+  margin-bottom: 16px;
+}
+
+.blueprint-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.assigned-note {
+  font-size: 13px;
+  color: #2d6a4f;
+  font-weight: 500;
+}
+
+.bp-status {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+}
+
+.bp-status.generated {
+  background: #ead5c0;
+  color: #7a4a28;
+}
+
+.bp-status.confirmed {
+  background: #e6f4ea;
+  color: #2d6a4f;
+}
+
+.bp-status.assigned {
+  background: #e6f0fb;
+  color: #1a4a8a;
+}
+
+.blueprints-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+  gap: 16px;
+}

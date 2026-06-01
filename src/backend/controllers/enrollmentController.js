@@ -31,6 +31,25 @@ const EnrollmentController = {
       next(err);
     }
   },
+  getStudentCourses: async (req, res, next) => {
+    try {
+      const { Subject } = require("../models/index");
+      const enrollments = await CourseEnrollment.findAll({
+        where: { student_id: req.user.id },
+        include: [
+          {
+            model: Course,
+            include: [{ model: Subject, attributes: ["name"] }],
+          },
+        ],
+        order: [["createdAt", "DESC"]],
+      });
+
+      res.status(200).json(enrollments);
+    } catch (err) {
+      next(err);
+    }
+  },
 
   selfEnroll: async (req, res, next) => {
     try {

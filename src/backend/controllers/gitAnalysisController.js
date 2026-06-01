@@ -172,7 +172,26 @@ const GitAnalysisController = {
       next(err);
     }
   },
+  getStudentCommits: async (req, res, next) => {
+    try {
+      const { username, repo_name } = req.params;
+      const { start_date, deadline } = req.query;
+      const response = await gitService.getCommits(username, repo_name, start_date, deadline);
+      res.status(200).json(response);
+    } catch (err) {
+      next(err);
+    }
+  },
 
+  getOneCommit: async (req, res, next) => {
+    try {
+      const { username, repo_name, commit_sha } = req.params;
+      const response = await gitService.getOneCommit(username, repo_name, commit_sha);
+      res.status(200).json(response);
+    } catch (err) {
+      next(err);
+    }
+  },
   getStudentsWithNoAssignment: async (req, res, next) => {
     try {
       const course = await Course.findOne({

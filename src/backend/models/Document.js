@@ -44,6 +44,10 @@ const Document = sequelize.define(
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    week_number: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     chroma_chunk_ids: {
       type: DataTypes.JSONB,
       allowNull: true,
