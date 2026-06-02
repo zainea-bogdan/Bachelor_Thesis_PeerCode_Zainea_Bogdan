@@ -7,6 +7,7 @@ import CourseDetail from "./pages/CourseDetail";
 import StudentCourses from "./pages/StudentCourses";
 import StudentCourseDetail from "./pages/StudentCourseDetail";
 import GitAnalysis from "./pages/GitAnalysis";
+import StudentDashboard from "./pages/StudentDashboard";
 
 const App = () => {
   const { loading } = useAuth();
@@ -22,6 +23,7 @@ const App = () => {
       <Route path="/courses" element={<StudentCourses />} />
       <Route path="/student/courses/:id" element={<StudentCourseDetail />} />
       <Route path="/analytics" element={<GitAnalysis />} />
+      <Route path="/my-projects" element={<StudentDashboard />} />
     </Routes>
   );
 };

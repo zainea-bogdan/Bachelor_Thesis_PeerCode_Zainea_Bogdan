@@ -1,4 +1,4 @@
-const { BlueprintAssignment, Blueprint, Course, CourseEnrollment } = require("../models/index");
+const { BlueprintAssignment, Blueprint, Course, CourseEnrollment, GitAnalysisStatistics } = require("../models/index");
 const notificationService = require("../services/notificationService");
 
 const AssignmentController = {
@@ -145,8 +145,8 @@ const AssignmentController = {
         return res.status(403).json({ error: "Access denied" });
       }
 
-      if (assignment.status !== "under_review") {
-        return res.status(400).json({ error: "Only under_review assignments can be evaluated" });
+      if (!["under_review", "reviewed"].includes(assignment.status)) {
+        return res.status(400).json({ error: "Only under_review or reviewed assignments can be evaluated" });
       }
 
       await assignment.update({
@@ -180,7 +180,12 @@ const AssignmentController = {
         include: [
           {
             model: Blueprint,
-            attributes: ["title", "domain", "difficulty", "status", "course_id"],
+            attributes: ["title", "domain", "difficulty", "status", "course_id", "content"],
+          },
+          {
+            model: GitAnalysisStatistics,
+            order: [["analyzed_at", "DESC"]],
+            limit: 1,
           },
         ],
         order: [["joined_at", "DESC"]],

@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import Navbar from "../components/Navbar";
+import CommentThread from "../components/CommentThread";
 import "./GitAnalysis.css";
 
 const GitAnalysis = () => {
+  const { user } = useAuth();
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState("");
   const [analytics, setAnalytics] = useState([]);
@@ -17,6 +20,11 @@ const GitAnalysis = () => {
   const [expandedCommit, setExpandedCommit] = useState(null);
   const [commitDetail, setCommitDetail] = useState({});
   const [loadingCommit, setLoadingCommit] = useState(null);
+  const [showGrade, setShowGrade] = useState(false);
+  const [gradingAssignment, setGradingAssignment] = useState(null);
+  const [teacherNote, setTeacherNote] = useState("");
+  const [grade, setGrade] = useState("");
+  const [grading, setGrading] = useState(false);
 
   useEffect(() => {
     api.get("/courses").then((res) => setCourses(res.data));
@@ -120,6 +128,41 @@ const GitAnalysis = () => {
     }
   };
 
+  const handleMarkReview = async (assignmentId) => {
+    try {
+      await api.patch(`/assignments/${assignmentId}/review`);
+      fetchAnalytics();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleEvaluate = async (e) => {
+    e.preventDefault();
+    setGrading(true);
+    try {
+      await api.patch(`/assignments/${gradingAssignment.id}/evaluate`, {
+        teacher_note: `[Grade: ${grade}/10] ${teacherNote}`,
+      });
+      setShowGrade(false);
+      setTeacherNote("");
+      setGrade("");
+      setGradingAssignment(null);
+      fetchAnalytics();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setGrading(false);
+    }
+  };
+
+  const closeGradeModal = () => {
+    setShowGrade(false);
+    setTeacherNote("");
+    setGrade("");
+    setGradingAssignment(null);
+  };
+
   return (
     <div className="page">
       <Navbar />
@@ -169,9 +212,8 @@ const GitAnalysis = () => {
                         <th>Status</th>
                         <th>Commits</th>
                         <th>Active days</th>
-                        <th>Late start</th>
-                        <th>One day spike</th>
                         <th>Flags</th>
+                        <th>Grade</th>
                         <th></th>
                       </tr>
                     </thead>
@@ -181,6 +223,7 @@ const GitAnalysis = () => {
                         const isExpanded = expandedRow === a.id;
                         const rowCommits = commits[a.id] || [];
                         const flags = stat?.summary?.flags || [];
+                        const warningCount = flags.filter((f) => f.type === "warning").length;
 
                         return (
                           <>
@@ -189,37 +232,61 @@ const GitAnalysis = () => {
                                 <div className="ga-student-name">{a.student?.name}</div>
                                 <div className="ga-student-sub">{a.student?.github_username}</div>
                               </td>
-                              <td>{a.blueprint?.title}</td>
+                              <td className="ga-blueprint-cell">{a.blueprint?.title}</td>
                               <td>
                                 <span className={`ga-status ga-status--${a.status}`}>{a.status}</span>
                               </td>
-                              <td>{stat?.total_commits ?? "—"}</td>
-                              <td>{stat?.active_days ?? "—"}</td>
-                              <td>{stat ? <span className={stat.late_start ? "ga-flag-yes" : "ga-flag-no"}>{stat.late_start ? "Yes" : "No"}</span> : "—"}</td>
-                              <td>{stat ? <span className={stat.one_day_spike ? "ga-flag-yes" : "ga-flag-no"}>{stat.one_day_spike ? "Yes" : "No"}</span> : "—"}</td>
+                              <td className="ga-center">{stat?.total_commits ?? "—"}</td>
+                              <td className="ga-center">{stat?.active_days ?? "—"}</td>
                               <td>
-                                {flags.filter((f) => f.type === "warning").length > 0 ? (
-                                  <div className="ga-flags">
-                                    {flags
-                                      .filter((f) => f.type === "warning")
-                                      .map((f, i) => (
-                                        <span key={i} className="ga-flag-badge">
-                                          {f.name}
-                                        </span>
-                                      ))}
-                                  </div>
+                                {warningCount > 0 ? (
+                                  <span className="ga-flag-count">
+                                    {warningCount} warning{warningCount > 1 ? "s" : ""}
+                                  </span>
                                 ) : (
-                                  "—"
+                                  <span className="ga-flag-none">None</span>
                                 )}
                               </td>
-                              <td>
+                              <td onClick={(e) => e.stopPropagation()}>
+                                {a.status === "submitted" && (
+                                  <button className="ga-grade-btn ga-grade-btn--review" onClick={() => handleMarkReview(a.id)}>
+                                    Mark review
+                                  </button>
+                                )}
+                                {a.status === "under_review" && (
+                                  <button
+                                    className="ga-grade-btn ga-grade-btn--evaluate"
+                                    onClick={() => {
+                                      setGradingAssignment(a);
+                                      setShowGrade(true);
+                                    }}
+                                  >
+                                    Evaluate
+                                  </button>
+                                )}
+                                {a.status === "reviewed" && (
+                                  <div className="ga-reviewed-cell">
+                                    <span className="ga-reviewed-note">✓ Reviewed</span>
+                                    <button
+                                      className="ga-grade-btn ga-grade-btn--review"
+                                      onClick={() => {
+                                        setGradingAssignment(a);
+                                        setShowGrade(true);
+                                      }}
+                                    >
+                                      Re-evaluate
+                                    </button>
+                                  </div>
+                                )}
+                              </td>
+                              <td className="ga-center">
                                 <span className="ga-expand-btn">{isExpanded ? "▲" : "▼"}</span>
                               </td>
                             </tr>
 
                             {isExpanded && (
                               <tr key={`${a.id}-expanded`}>
-                                <td colSpan={9} className="ga-expanded-cell">
+                                <td colSpan={8} className="ga-expanded-cell">
                                   <div className="ga-expanded-section">
                                     <div className="ga-expanded-title">Commits</div>
                                     {loadingCommits ? (
@@ -299,6 +366,11 @@ const GitAnalysis = () => {
                                       </div>
                                     )}
                                   </div>
+
+                                  <div className="ga-expanded-section">
+                                    <div className="ga-expanded-title">Comments</div>
+                                    <CommentThread assignmentId={a.id} currentUser={user} />
+                                  </div>
                                 </td>
                               </tr>
                             )}
@@ -329,6 +401,35 @@ const GitAnalysis = () => {
           </>
         )}
       </div>
+
+      {showGrade && (
+        <div className="modal-overlay" onClick={closeGradeModal}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Evaluate assignment</h2>
+            <p style={{ fontSize: "14px", color: "#8C6A50", marginBottom: "20px" }}>
+              Student: <strong>{gradingAssignment?.student?.name}</strong>
+            </p>
+            <form onSubmit={handleEvaluate} className="modal-form">
+              <div className="field">
+                <label>Grade (1–10)</label>
+                <input type="number" min="1" max="10" placeholder="e.g. 8" value={grade} onChange={(e) => setGrade(e.target.value)} required style={{ padding: "10px 14px", border: "1px solid #D4B896", borderRadius: "8px", background: "#FAF5EF", color: "#2C1A0E", fontSize: "14px", outline: "none" }} />
+              </div>
+              <div className="field">
+                <label>Teacher note</label>
+                <textarea placeholder="Leave feedback for the student..." value={teacherNote} onChange={(e) => setTeacherNote(e.target.value)} rows={4} required style={{ width: "100%", padding: "10px 14px", border: "1px solid #D4B896", borderRadius: "8px", background: "#FAF5EF", color: "#2C1A0E", fontSize: "14px", outline: "none", resize: "vertical", fontFamily: "inherit" }} />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn-ghost" onClick={closeGradeModal}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary" disabled={grading}>
+                  {grading ? "Saving..." : "Submit evaluation"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

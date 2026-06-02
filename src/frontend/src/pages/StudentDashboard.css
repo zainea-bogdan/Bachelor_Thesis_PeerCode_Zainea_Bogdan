@@ -1,0 +1,270 @@
+.sd-empty {
+  font-size: 14px;
+  color: #8c6a50;
+  padding: 40px 0;
+}
+
+.sd-empty-state {
+  text-align: center;
+  padding: 80px 24px;
+  color: #8c6a50;
+  font-size: 15px;
+}
+
+.sd-assignments {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sd-card {
+  background: #fdfaf6;
+  border: 1px solid #d4b896;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.sd-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px 24px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.sd-card-header:hover {
+  background: #f5ede0;
+}
+
+.sd-card-left {
+  flex: 1;
+}
+
+.sd-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.sd-difficulty {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sd-difficulty--easy {
+  background: #e6f4ea;
+  color: #2d6a4f;
+}
+.sd-difficulty--medium {
+  background: #fff3cd;
+  color: #856404;
+}
+.sd-difficulty--hard {
+  background: #fde8e8;
+  color: #8b2020;
+}
+
+.sd-domain {
+  font-size: 13px;
+  color: #8c6a50;
+  font-weight: 500;
+}
+
+.sd-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #2c1a0e;
+  margin: 0 0 10px;
+}
+
+.sd-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sd-status {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  text-transform: uppercase;
+}
+
+.sd-status--in_progress {
+  background: #ead5c0;
+  color: #7a4a28;
+}
+.sd-status--submitted {
+  background: #fff3cd;
+  color: #856404;
+}
+.sd-status--under_review {
+  background: #e6f0fb;
+  color: #1a4a8a;
+}
+.sd-status--reviewed {
+  background: #e6f4ea;
+  color: #2d6a4f;
+}
+
+.sd-meta-item {
+  font-size: 12px;
+  color: #8c6a50;
+  background: #ede0cc;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.sd-meta-warning {
+  font-size: 11px;
+  font-weight: 600;
+  color: #8b2020;
+  background: #fde8e8;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.sd-grade-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #2d6a4f;
+  background: #e6f4ea;
+  padding: 2px 10px;
+  border-radius: 20px;
+}
+
+.sd-expand-btn {
+  font-size: 11px;
+  color: #8c6a50;
+  flex-shrink: 0;
+  margin-left: 16px;
+  margin-top: 4px;
+}
+
+.sd-card-body {
+  border-top: 1px solid #ede0cc;
+}
+
+.sd-section {
+  padding: 20px 24px;
+  border-bottom: 1px solid #ede0cc;
+}
+
+.sd-section:last-child {
+  border-bottom: none;
+}
+
+.sd-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8c6a50;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 14px;
+}
+
+.sd-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.sd-stat {
+  background: #faf5ef;
+  border: 1px solid #ede0cc;
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+}
+
+.sd-stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #7a4a28;
+  margin-bottom: 4px;
+}
+
+.sd-stat-label {
+  font-size: 11px;
+  color: #8c6a50;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sd-flags {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sd-flag-item {
+  background: #fde8e8;
+  border: 1px solid #f5c0c0;
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.sd-flag-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8b2020;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.sd-flag-desc {
+  font-size: 13px;
+  color: #5c3d24;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.sd-feedback {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.sd-grade-display {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  background: #e6f4ea;
+  border: 1px solid #a8d5b5;
+  border-radius: 12px;
+  padding: 12px 20px;
+  flex-shrink: 0;
+}
+
+.sd-grade-number {
+  font-size: 36px;
+  font-weight: 700;
+  color: #2d6a4f;
+  line-height: 1;
+}
+
+.sd-grade-denom {
+  font-size: 16px;
+  color: #2d6a4f;
+  font-weight: 500;
+}
+
+.sd-note {
+  font-size: 14px;
+  color: #2c1a0e;
+  line-height: 1.6;
+  margin: 0;
+  flex: 1;
+  padding-top: 8px;
+}

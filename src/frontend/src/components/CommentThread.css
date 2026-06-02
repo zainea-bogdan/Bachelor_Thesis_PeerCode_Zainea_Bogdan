@@ -1,0 +1,132 @@
+.ct-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ct-empty {
+  font-size: 13px;
+  color: #8c6a50;
+  padding: 8px 0;
+}
+
+.ct-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.ct-message {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 80%;
+}
+
+.ct-message--me {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.ct-message--other {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.ct-message-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ct-role-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ct-role-badge--teacher {
+  background: #ead5c0;
+  color: #7a4a28;
+}
+
+.ct-role-badge--student {
+  background: #e6f0fb;
+  color: #1a4a8a;
+}
+
+.ct-date {
+  font-size: 11px;
+  color: #b89a80;
+}
+
+.ct-bubble {
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #2c1a0e;
+  word-break: break-word;
+}
+
+.ct-message--me .ct-bubble {
+  background: #7a4a28;
+  color: #faf5ef;
+  border-bottom-right-radius: 4px;
+}
+
+.ct-message--other .ct-bubble {
+  background: #fdfaf6;
+  border: 1px solid #d4b896;
+  border-bottom-left-radius: 4px;
+}
+
+.ct-form {
+  display: flex;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #ede0cc;
+}
+
+.ct-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #d4b896;
+  border-radius: 8px;
+  background: #faf5ef;
+  color: #2c1a0e;
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+}
+
+.ct-input:focus {
+  border-color: #7a4a28;
+}
+
+.ct-send-btn {
+  padding: 8px 16px;
+  background: #7a4a28;
+  color: #faf5ef;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  flex-shrink: 0;
+}
+
+.ct-send-btn:hover {
+  background: #5c3d24;
+}
+.ct-send-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
